@@ -4,9 +4,13 @@ author: "Khusbu Bhushal"
 date: "2025-11-30"
 ---
 
+```r
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE)
-```
+knitr::opts_chunk$set(
+  echo = TRUE,
+  warning = FALSE,
+  message = FALSE
+)
 
 # INTRODUCTION
 This project uses market basket analysis to explore frequent itemsets and association rules.  
