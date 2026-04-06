@@ -1,0 +1,176 @@
+---
+title: "SE 412 Project 1 - Market Basket Analysis"
+author: "Khusbu Bhushal"
+date: "2025-11-30"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# INTRODUCTION
+This project uses market basket analysis to explore frequent itemsets and association rules.  
+
+# LOAD PACKAGES
+```{r packages, message=FALSE, warning=FALSE}
+library(arules)
+library(arulesViz)
+library(tidyverse)
+library(readxl)
+library(plyr)
+library(knitr)
+```
+
+# LOAD DATA
+```{r load-data}
+Itemslist <- read.csv2("Assignment-1_Data.csv", check.names = FALSE)
+Itemslist <- Itemslist[complete.cases(Itemslist), ]
+head(Itemslist)
+```
+
+# PREPROCESSING
+```{r preprocessing}
+# Group items into full transactions
+transactionData <- ddply(Itemslist, c("BillNo","Country"),
+                         function(df1) paste(df1$Itemname, collapse=","))
+
+colnames(transactionData) <- c("BillNo", "Country", "items")
+
+# Create France & Other datasets
+franceData <- subset(transactionData, Country == "France")
+otherData  <- subset(transactionData, Country != "France")
+
+# Remove Country column
+franceData$Country <- NULL
+otherData$Country  <- NULL
+
+colnames(franceData) <- c("BillNo", "items")
+colnames(otherData)  <- c("BillNo", "items")
+
+# Prepare item-only data frames for Apriori
+transactionData_apriori <- data.frame(items = transactionData$items)
+france_apriori          <- data.frame(items = franceData$items)
+other_apriori           <- data.frame(items = otherData$items)
+
+# Save CSVs
+write.csv(transactionData_apriori, "transactions_basket.csv", quote=FALSE, row.names=FALSE)
+write.csv(france_apriori,          "france_basket.csv",       quote=FALSE, row.names=FALSE)
+write.csv(other_apriori,           "other_basket.csv",        quote=FALSE, row.names=FALSE)
+
+# Load into transaction objects
+trans_all   <- read.transactions("transactions_basket.csv", format="basket", sep=",")
+trans_fra   <- read.transactions("france_basket.csv",       format="basket", sep=",")
+trans_other <- read.transactions("other_basket.csv",        format="basket", sep=",")
+
+summary(trans_all)
+summary(trans_fra)
+summary(trans_other)
+```
+
+##Everthing above in one dataframe is a tiny 3 row output that shows the printed example of item labels insidet the transaction object
+##its purpose is to show a preview of item names so so you know what type of items are inside the transactions
+##The bigger R Console data frame like output is a transaction length distribution that says:
+## 1521 transactions contain 1 item , 843 transactions contain 2 items , 735 transactions contain 3 items , 419 items is the longest basket in the dataset (very large transaction)
+
+---
+
+# RQ1: What frequent itemsets and rules appear in the FULL dataset?
+
+## RUN APRIORI FOR FULL DATASET
+```{r apriori-full}
+rules_all <- apriori(trans_all,
+                     parameter = list(supp = 0.01, conf = 0.5))
+
+summary(rules_all)
+inspect(head(rules_all, 10))
+```
+### The Apriori algorithm discovered several very strong association rules in the full dataset. For example, {SET 3 RETROSPOT TEA} ⇒ {SUGAR} has 100% confidence and lift = 86.49, indicating that customers who purchase this tea set are extremely likely to also purchase sugar. The reversed rule {SUGAR} ⇒ {SET 3 RETROSPOT TEA} also holds with the same confidence and lift, meaning these items almost always appear together. These high-lift rules show strong product affinities that could inform product placement and bundling strategies.
+### IT also shows set of 159 rules
+###Most rules contained 2–3 items, showing that customers tend to purchase small item combinations
+###Support
+
+###→ Rules appear in 1%–2% of all transactions.
+
+###Confidence
+###→ Many rules are strong because confidence is 0.50 to 1.00
+###(50%–100% probability of RHS given LHS)
+
+###Lift
+###→ Lift values range from 6 to 86, meaning:
+###lift > 1 = items occur together more than random chance
+###lift > 10 = very strong association
+###lift ~ 80 = extremely strong association
+
+
+## ITEM FREQUENCY PLOT
+```{r item-frequency-plot, fig.width=8, fig.height=6}
+itemFrequencyPlot(trans_all,
+                  topN = 20,
+                  type = "absolute",
+                  main = "Top 20 Most Frequent Items")
+```
+
+## SCATTER PLOT FOR ALL RULES
+```{r scatter-all, fig.width=8, fig.height=6}
+plot(rules_all,
+     measure = c("support","confidence"),
+     shading = "lift",
+     main = "Support vs Confidence (Colored by Lift)")
+```
+
+## GRAPH OF TOP 20 STRONGEST RULES
+```{r graph-top20, fig.width=8, fig.height=6}
+top20 <- head(sort(rules_all, by="lift"), 20)
+plot(top20, method="graph", control=list(type="items"),
+     main="Top 20 Strongest Association Rules")
+```
+
+---
+
+# RQ2: How do rules differ for France vs Other Regions?
+
+## APRIORI FOR FRANCE
+```{r apriori-france}
+rules_fra <- apriori(trans_fra,
+                     parameter = list(supp = 0.01, conf = 0.5))
+summary(rules_fra)
+inspect(head(rules_fra, 10))
+```
+
+## APRIORI FOR OTHER REGIONS
+```{r apriori-other}
+rules_other <- apriori(trans_other,
+                       parameter = list(supp = 0.01, conf = 0.5))
+summary(rules_other)
+inspect(head(rules_other, 10))
+```
+
+## SCATTER PLOT - FRANCE
+```{r plot-france, fig.width=8, fig.height=6}
+plot(rules_fra,
+     measure = c("support","confidence"),
+     shading = "lift",
+     main="France: Support vs Confidence")
+```
+
+## SCATTER PLOT - OTHER REGIONS
+```{r plot-other, fig.width=8, fig.height=6}
+plot(rules_other,
+     measure = c("support","confidence"),
+     shading = "lift",
+     main="Other Regions: Support vs Confidence")
+```
+
+## GRAPH OF STRONGEST RULES - FRANCE
+```{r graph-france, fig.width=8, fig.height=6}
+top_fra <- head(sort(rules_fra, by="lift"), 10)
+plot(top_fra, method="graph", control=list(type="items"),
+     main="France: Top 10 Strongest Rules")
+```
+
+## GRAPH OF STRONGEST RULES - OTHER REGIONS
+```{r graph-other, fig.width=8, fig.height=6}
+top_other <- head(sort(rules_other, by="lift"), 10)
+plot(top_other, method="graph", control=list(type="items"),
+     main="Other Countries: Top 10 Strongest Rules")
+```
