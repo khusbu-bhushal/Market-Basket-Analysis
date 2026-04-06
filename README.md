@@ -23,6 +23,13 @@ The goal of this project is to:
 
 ---
 
+## 📄 Output
+
+The live project can be viewed by clicking the link below:  
+👉 [View HTML](https://khusbu-bhushal.github.io/Market-Basket-Analysis/)
+
+---
+
 ## 📊 Dataset
 
 The project uses transaction data from multiple sources:
@@ -55,13 +62,6 @@ These datasets represent customer purchase behavior and are used to analyze item
 * Certain items frequently appear together in transactions
 * Strong association rules highlight customer purchasing patterns
 * Differences exist between regional buying behaviors (France vs others)
-
----
-
-## 📄 Output
-
-The live project can be viewed here:  
-👉 [View HTML Report](https://khusbu-bhushal.github.io/Market-Basket-Analysis/)
 
 ---
 
