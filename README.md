@@ -60,8 +60,8 @@ These datasets represent customer purchase behavior and are used to analyze item
 
 ## 📄 Output
 
-The full analysis and results can be viewed here:
-👉 **[View HTML Report](market_basket_analysis.html)**
+The live project can be viewed here:  
+👉 [View HTML Report](https://khusbu-bhushal.github.io/Market-Basket-Analysis/)
 
 ---
 
